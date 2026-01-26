@@ -42,7 +42,7 @@ return {
       settings = {
         ["rust-analyzer"] = {
           cargo = { allFeatures = true },
-          checkOnSave = { command = "clippy" },
+          checkOnSave = true
         },
       },
     }
@@ -54,6 +54,7 @@ return {
       cmd = { "pyright-langserver", "--stdio" },
       capabilities = capabilities,
     }
+
 
     --------------------------------------------------
     -- Activate servers

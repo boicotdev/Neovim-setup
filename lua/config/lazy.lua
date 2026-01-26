@@ -14,13 +14,13 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
-  require("plugins.ui"),
-  require("plugins.treesitter"),
-  require("plugins.completion"),
-  require("plugins.lsp"),
-  require("plugins.explorer"),
+  require("config.ui"),
+  require("config.formatter"),
+  require("config.dap"),
+  require("config.completion"),
+  require("config.lsp"),
+  require("config.explorer"),
   require("plugins.telescope"),
   require("plugins.gitsigns"),
-  require("plugins.formatter"),
-  require("plugins.dap"),
+  require("plugins.treesitter"),
 })

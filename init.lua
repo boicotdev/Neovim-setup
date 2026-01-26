@@ -35,7 +35,7 @@ vim.opt.spelllang = { "en_us" }      -- Set spell check language to US English
 -- =============================================================================
 vim.opt.number = true                -- Show absolute line numbers
 vim.opt.relativenumber = true        -- Show relative line numbers for easy motion
-
+vim.opt.cursorline = true -- Show which line your cursor is on
 -- =============================================================================
 -- USER INTERFACE
 -- =============================================================================
@@ -76,7 +76,7 @@ vim.opt.backspace = {                -- Allow backspace over:
   "eol",                             --   line breaks
   "indent"                           --   autoindent
 }
-
+--TODO: 
 -- =============================================================================
 -- WINDOW SPLITS
 -- =============================================================================
@@ -103,8 +103,7 @@ vim.opt.mouse = ""                   -- Disable mouse (set to "a" to enable)
 -- =============================================================================
 -- SHELL
 -- =============================================================================
-vim.opt.shell = "fish"               -- Set default shell for :! commands
-
+vim.opt.shell = "bash" --fish --zsh              -- Set default shell for :! commands
 -- =============================================================================
 -- FILE SEARCH
 -- =============================================================================
@@ -147,11 +146,11 @@ vim.cmd([[au BufNewFile,BufRead Podfile setf ruby]])   -- CocoaPods Podfile as R
 if vim.fn.has("nvim-0.8") == 1 then
   vim.opt.cmdheight = 0
 end
-
--- =============================================================================
--- PLUGIN MANAGER (lazy.nvim)
--- =============================================================================
--- Bootstrap lazy.nvim if not installed
+--
+-- -- =============================================================================
+-- -- PLUGIN MANAGER (lazy.nvim)
+-- -- =============================================================================
+-- -- Bootstrap lazy.nvim if not installed
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -164,13 +163,19 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- =============================================================================
--- LOAD PLUGINS
--- =============================================================================
--- Plugin specifications are defined in lua/plugins/lazy.lua
-require("plugins.lazy")
+vim.api.nvim_create_autocmd("TextYankPost", {
+  callback = function()
+    vim.highlight.on_yank({
+      higroup = "IncSearch",
+      timeout = 150,
+    })
+  end,
+})
 
 -- =============================================================================
--- COLORSCHEME
+-- LOAD CONFIGS
 -- =============================================================================
-vim.cmd.colorscheme("tokyonight-night")
+-- Plugin specifications are defined in lua/config/lazy.lua
+require("config.lazy")
+require("config.keymaps")
+-- =============================================================================
