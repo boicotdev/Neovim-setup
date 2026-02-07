@@ -1,21 +1,32 @@
--- =============================================================================
--- KEYMAPS
--- =============================================================================
+return {
 
-local keymap = vim.keymap.set
-local opts = { noremap = true, silent = true }
+  vim.api.nvim_create_autocmd("TextYankPost", {
+    callback = function()
+      vim.highlight.on_yank({
+        higroup = "IncSearch",
+        timeout = 150,
+      })
+    end,
+  }),
 
--- -------------------------------------------------
--- Buffers
--- -------------------------------------------------
-keymap("n", "<leader>bn", ":bnext<CR>", opts)
-keymap("n", "<leader>bp", ":bprevious<CR>", opts)
-keymap("n", "<leader>bd", ":bdelete<CR>", opts)
 
--- -------------------------------------------------
--- Window navigation
--- -------------------------------------------------
-keymap("n", "<leader>h", "<C-w>h", opts)
-keymap("n", "<leader>j", "<C-w>j", opts)
-keymap("n", "<leader>k", "<C-w>k", opts)
-keymap("n", "<leader>l", "<C-w>l", opts)
+  -- ================================================================================
+  -- -- KEYMAPS
+  -- ================================================================================
+
+  -- Ir al error anterior/siguiente
+  vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Error anterior' }),
+  vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Error siguiente' }),
+
+  -- Mostrar el mensaje de error completo en una ventana flotante
+  vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'See floating error' }),
+  vim.keymap.set(
+    "n",
+    "<leader>p",
+    ":!prettier --write %<CR>",
+    { desc = "Format file with Prettier" }
+  ),
+  vim.keymap.set("n", "<leader>fe", ":Vexplore<CR>", { desc = "File Explorer vertical" }),
+  vim.keymap.set("n", "<leader>h", "gT", { noremap = true, silent = true }), -- previous tab
+  vim.keymap.set("n", "<leader>l", "gt", { noremap = true, silent = true }), -- next tab
+}

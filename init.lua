@@ -76,7 +76,6 @@ vim.opt.backspace = {                -- Allow backspace over:
   "eol",                             --   line breaks
   "indent"                           --   autoindent
 }
---TODO: 
 -- =============================================================================
 -- WINDOW SPLITS
 -- =============================================================================
@@ -139,43 +138,143 @@ vim.opt.formatoptions:append({ "r" })
 vim.cmd([[au BufNewFile,BufRead *.astro setf astro]])  -- Astro framework files
 vim.cmd([[au BufNewFile,BufRead Podfile setf ruby]])   -- CocoaPods Podfile as Ruby
 
--- =============================================================================
--- VERSION-SPECIFIC SETTINGS
--- =============================================================================
--- Hide command line when not in use (requires Neovim 0.8+)
-if vim.fn.has("nvim-0.8") == 1 then
-  vim.opt.cmdheight = 0
-end
---
--- -- =============================================================================
--- -- PLUGIN MANAGER (lazy.nvim)
--- -- =============================================================================
--- -- Bootstrap lazy.nvim if not installed
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    lazypath,
-  })
-end
-vim.opt.rtp:prepend(lazypath)
 
-vim.api.nvim_create_autocmd("TextYankPost", {
+
+
+-- =============================================================================
+-- VIEW TYPE NERDTREE
+-- =============================================================================
+vim.g.netrw_banner = 0        -- Quit the banner
+vim.g.netrw_liststyle = 3    -- View type tree
+vim.g.netrw_browse_split = 0
+vim.g.netrw_winsize = 25
+
+
+-- -- =============================================================================
+-- -- THEME & COLORS
+-- -- =============================================================================
+local function toggle_theme()
+  local bg = vim.o.background == "dark" and "light" or "dark"
+  vim.o.background = bg
+
+  package.loaded["theme"] = nil
+  require("theme").apply(bg)
+
+  vim.fn.writefile({ bg }, vim.fn.stdpath("data") .. "/theme_mode")
+end
+
+
+
+local theme_file = vim.fn.stdpath("data") .. "/theme_mode"
+if vim.fn.filereadable(theme_file) == 1 then
+  local mode = vim.fn.readfile(theme_file)[1]
+  require("theme").apply(mode)
+else
+  require("theme").apply("dark")
+end
+
+vim.keymap.set("n", "<leader>tt", toggle_theme) -- TOGGLE THEME
+
+----
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
+
+vim.api.nvim_create_autocmd("InsertCharPre", {
   callback = function()
-    vim.highlight.on_yank({
-      higroup = "IncSearch",
-      timeout = 150,
-    })
+    if vim.fn.pumvisible() == 1 then return end
+    vim.api.nvim_feedkeys(
+      vim.api.nvim_replace_termcodes("<C-x><C-o>", true, false, true),
+      "n",
+      false
+    )
   end,
 })
 
--- =============================================================================
--- LOAD CONFIGS
--- =============================================================================
--- Plugin specifications are defined in lua/config/lazy.lua
-require("config.lazy")
-require("config.keymaps")
--- =============================================================================
+
+
+
+-- 
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local buf = args.buf
+
+    local map = function(mode, lhs, rhs, desc)
+      vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
+    end
+
+    map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+    map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+    map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+    map("n", "gr", vim.lsp.buf.references, "Go to references")
+    map("n", "K",  vim.lsp.buf.hover, "Hover documentation")
+  end,
+})
+
+
+require('config.keymaps')
+require('config.diagnostics')
+--require("nvim-web-devicons")
+
+-- local devicons = require("nvim-web-devicons")
+--
+-- local filename = vim.fn.expand("%:t")
+-- local extension = vim.fn.expand("%:e")
+--
+-- local icon, hl = devicons.get_icon(
+--   filename,
+--   extension,
+--   { default = true }
+-- )
+--
+--
+--
+-- function _G.file_icon()
+--   local ok, devicons = pcall(require, "nvim-web-devicons")
+--   if not ok then return "" end
+--
+--   local fname = vim.fn.expand("%:t")
+--   local ext = vim.fn.expand("%:e")
+--
+--   local icon = devicons.get_icon(fname, ext, { default = true })
+--   return icon and (icon .. " ") or ""
+-- end
+--
+--
+-- function _G.lsp_diagnostics()
+--   local bufnr = 0
+--   local errors = #vim.diagnostic.get(bufnr, {
+--     severity = vim.diagnostic.severity.ERROR
+--   })
+--   local warns = #vim.diagnostic.get(bufnr, {
+--     severity = vim.diagnostic.severity.WARN
+--   })
+--
+--   local out = {}
+--   if errors > 0 then table.insert(out, "❌ " .. errors) end
+--   if warns  > 0 then table.insert(out, "⚠️ " .. warns) end
+--
+--   return table.concat(out, " ")
+-- end
+--
+--
+-- function _G.lsp_name()
+--   local clients = vim.lsp.get_clients({ bufnr = 0 })
+--   if #clients == 0 then return "" end
+--   return "⚙️ " .. clients[1].name
+-- end
+--
+--
+-- vim.opt.statusline = table.concat({
+--   " ",
+--   "%#Normal#",
+--   "%{v:lua.file_icon()}",
+--   "%f",
+--   "  ",
+--   "%=",
+--   "%{v:lua.lsp_diagnostics()}",
+--   "  ",
+--   "%{v:lua.lsp_name()}",
+--   "  ",
+--   "%l:%c ",
+-- })
+
+vim.lsp.enable({'clangd', 'rust_analyzer', 'prettier', 'pyright'})
