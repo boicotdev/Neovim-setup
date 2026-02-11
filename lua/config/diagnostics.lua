@@ -1,13 +1,26 @@
 return {
   vim.diagnostic.config({
-    virtual_text = {
-      prefix = '●', -- Character that appears at the end of the line.
-      source = "if_many", -- Show if the error come from rust_analyzer or clippy.
+    --virtual_lines = true,
+    virtual_text = true,
+    underline = true,
+    update_in_insert = false,
+    severity_sort = true,
+    float = {
+      border = "rounded",
+      source = true
     },
-    signs = true,         -- Show icons in the lateral column (gutter)
-    underline = true,     -- Emphasize the code with errors.
-    update_in_insert = false, -- No molesta mientras escribes (se actualiza al salir a modo normal)
-    severity_sort = true, -- Prioriza mostrar errores sobre advertencias
+    signs = {
+      text = {
+        [vim.diagnostic.severity.ERROR] = " ",
+        [vim.diagnostic.severity.WARN] = " ",
+        [vim.diagnostic.severity.INFO] = " ",
+        [vim.diagnostic.severity.HINT] = " ", 
+      },
+      numh1 = {
+        [vim.diagnostic.severity.ERROR] = "ErrorMsg",
+        [vim.diagnostic.severity.WARN] = "WarningMsg",
+      },
+    },
   })
-
 }
+

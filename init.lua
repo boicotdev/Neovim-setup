@@ -15,7 +15,7 @@ vim.g.maplocalleader = " "
 -- =============================================================================
 -- GLOBAL FLAGS
 -- =============================================================================
-vim.g.have_nerd_font = true          -- Enable Nerd Font icons support
+vim.g.have_nerd_font = false          -- Enable Nerd Font icons support
 vim.g.deprecation_warnings = true    -- Show deprecation warnings for debugging
 
 -- =============================================================================
@@ -44,7 +44,7 @@ vim.opt.showmode = false             -- Hide mode indicator (shown in statusline
 vim.opt.showcmd = true               -- Show partial commands in last line
 vim.opt.cmdheight = 1                -- Command line height (overridden below for 0.8+)
 vim.opt.laststatus = 2               -- Always show statusline
-vim.opt.termguicolors = false        -- Use terminal colors (set true for GUI colors)
+vim.opt.termguicolors = false       -- Use terminal colors (set true for GUI colors)
 vim.opt.scrolloff = 10               -- Keep 10 lines visible above/below cursor
 
 -- =============================================================================
@@ -149,132 +149,54 @@ vim.g.netrw_liststyle = 3    -- View type tree
 vim.g.netrw_browse_split = 0
 vim.g.netrw_winsize = 25
 
-
--- -- =============================================================================
--- -- THEME & COLORS
--- -- =============================================================================
-local function toggle_theme()
-  local bg = vim.o.background == "dark" and "light" or "dark"
-  vim.o.background = bg
-
-  package.loaded["theme"] = nil
-  require("theme").apply(bg)
-
-  vim.fn.writefile({ bg }, vim.fn.stdpath("data") .. "/theme_mode")
-end
+  vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
 
+  vim.api.nvim_create_autocmd("InsertCharPre", {
+    callback = function()
+      -- Do nothing if a menu is already
+      if vim.fn.pumvisible() == 1 then return end
 
-local theme_file = vim.fn.stdpath("data") .. "/theme_mode"
-if vim.fn.filereadable(theme_file) == 1 then
-  local mode = vim.fn.readfile(theme_file)[1]
-  require("theme").apply(mode)
-else
-  require("theme").apply("dark")
-end
+      -- Only if omnifunc exists. 
+      local omnifunc = vim.bo.omnifunc
+      if omnifunc == nil or omnifunc == "" then return end
 
-vim.keymap.set("n", "<leader>tt", toggle_theme) -- TOGGLE THEME
+      vim.api.nvim_feedkeys(
+        vim.api.nvim_replace_termcodes("<C-x><C-o>", true, false, true),
+        "n",
+        false
+      )
+    end,
+  })
 
-----
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
+  -- 
+  vim.api.nvim_create_autocmd("LspAttach", {
+    callback = function(args)
+      local buf = args.buf
 
-vim.api.nvim_create_autocmd("InsertCharPre", {
-  callback = function()
-    if vim.fn.pumvisible() == 1 then return end
-    vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes("<C-x><C-o>", true, false, true),
-      "n",
-      false
-    )
-  end,
-})
+      local map = function(mode, lhs, rhs, desc)
+        vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
+      end
 
-
-
-
--- 
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local buf = args.buf
-
-    local map = function(mode, lhs, rhs, desc)
-      vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
-    end
-
-    map("n", "gd", vim.lsp.buf.definition, "Go to definition")
-    map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
-    map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
-    map("n", "gr", vim.lsp.buf.references, "Go to references")
-    map("n", "K",  vim.lsp.buf.hover, "Hover documentation")
-  end,
-})
+      map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+      map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+      map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+      map("n", "gr", vim.lsp.buf.references, "Go to references")
+      map("n", "K",  vim.lsp.buf.hover, "Hover documentation")
+    end,
+  })
 
 
-require('config.keymaps')
-require('config.diagnostics')
---require("nvim-web-devicons")
+vim.keymap.set("i", "<C-y>", function()
+  if vim.fn.pumvisible() == 1 then
+    return vim.fn["complete_info"]().selected ~= -1
+      and vim.api.nvim_replace_termcodes("<C-y>", true, false, true)
+      or vim.api.nvim_replace_termcodes("<C-n><C-y>", true, false, true)
+  end
+  return vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+end, { expr = true, silent = true })
 
--- local devicons = require("nvim-web-devicons")
---
--- local filename = vim.fn.expand("%:t")
--- local extension = vim.fn.expand("%:e")
---
--- local icon, hl = devicons.get_icon(
---   filename,
---   extension,
---   { default = true }
--- )
---
---
---
--- function _G.file_icon()
---   local ok, devicons = pcall(require, "nvim-web-devicons")
---   if not ok then return "" end
---
---   local fname = vim.fn.expand("%:t")
---   local ext = vim.fn.expand("%:e")
---
---   local icon = devicons.get_icon(fname, ext, { default = true })
---   return icon and (icon .. " ") or ""
--- end
---
---
--- function _G.lsp_diagnostics()
---   local bufnr = 0
---   local errors = #vim.diagnostic.get(bufnr, {
---     severity = vim.diagnostic.severity.ERROR
---   })
---   local warns = #vim.diagnostic.get(bufnr, {
---     severity = vim.diagnostic.severity.WARN
---   })
---
---   local out = {}
---   if errors > 0 then table.insert(out, "❌ " .. errors) end
---   if warns  > 0 then table.insert(out, "⚠️ " .. warns) end
---
---   return table.concat(out, " ")
--- end
---
---
--- function _G.lsp_name()
---   local clients = vim.lsp.get_clients({ bufnr = 0 })
---   if #clients == 0 then return "" end
---   return "⚙️ " .. clients[1].name
--- end
---
---
--- vim.opt.statusline = table.concat({
---   " ",
---   "%#Normal#",
---   "%{v:lua.file_icon()}",
---   "%f",
---   "  ",
---   "%=",
---   "%{v:lua.lsp_diagnostics()}",
---   "  ",
---   "%{v:lua.lsp_name()}",
---   "  ",
---   "%l:%c ",
--- })
+  require('config.keymaps')
+  require('config.diagnostics')
 
-vim.lsp.enable({'clangd', 'rust_analyzer', 'prettier', 'pyright'})
+  vim.lsp.enable({'clangd', 'rust_analyzer', 'prettier', 'pyright'})
